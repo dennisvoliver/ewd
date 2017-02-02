@@ -1,0 +1,83 @@
+
+This is a mere clarification of the program discussed by Prof. Edsger W. Dijkstra in his article
+EWD123 Section 5.1 An Example of a Priority Rule
+My only concern is that since the size of the portion consumed by the consumer is unknown and that it does not
+bother to check whether there is enough in the buffer, there is a small chance that it will consume too much.
+For instance, if all consumers consume BUFFER_SIZE portions and at some point the buffer cannot be filled (the buffer is one unit empty)
+because the maximum portion size desired by the producer is more than one unit. Then the consumer will consume more than the content of the buffer.
+The portions_in_buffer does not have enough information to prevent this worst case scenario.
+
+{	integer	array	desire, producer_semaphore [1 : N];
+	integer portions_in_buffer, free_buffer_units,
+		producers_waiting, buffer_lock, loop;
+	for loop:= 1 step 1 until N do
+	{	desire[loop]:= 0;
+		producer_semaphore[loop]:= 0;
+	}
+	portions_in_buffer:= 0;
+	free_buffer_units:= BUFFER_SIZE;
+	producers_waiting:= 0;
+	buffer_lock:= 1;
+
+	parbegin
+	producer_1: {...};
+		.
+		.
+		.
+	producer_n: { integer portion_size;
+		again_n: produce_next_portion_and_set_portion_size();
+			P(buffer_lock);
+			if producers_waiting = 0 and free_buffer_units >= portion_size then
+				free_buffer_units:= free_buffer_units - portion_size;
+			else
+			{	producers_waiting:= producers_waiting + 1;
+				desire[n]:= portion_size;
+				V(buffer_lock);
+				P(producer_semaphore[n]);
+				P(buffer_lock);
+			}
+			add_portion_to_buffer();
+			V(buffer_lock);
+			V(portions_in_buffer);
+			goto again_n;
+		}
+		.
+		.
+		.
+	producer_N: { ... }
+	consumer_1: { ... }
+		.
+		.
+		.
+	consumer_m: {	integer portion_size, producer, max_desire, producer_with_max_desire;
+		again_m: P(portions_in_buffer);
+			P(buffer_lock);
+			take_portion_from_buffer_and_set_portion_size();
+			free_buffer_units:= free_buffer_units + portion_size;
+		test_m: if producers_waiting > 0 then
+			{	max_desire:= 0;
+				for n:= 1 step 1 until N do
+				{	if max_desire < desire[n] then
+					{	max_desire:= desire[n];
+						producer_with_max_desire:= n;
+					}
+				}
+				if max_desire <= free_buffer_units then
+				{	free_buffer_units:= free_buffer_units - max_desire;
+					desire[producer_with_max_desire]:= 0;
+					producers_waiting:= producers_waiting - 1;
+					V(producer_semaphore[producer_with_max_desire]);
+					goto test_m;
+				}
+			}
+			V(buffer_lock);
+			process_portion_taken();
+			goto again_m;
+		}
+		.
+		.
+		.
+	consumer_M: { ... }
+	parend
+}
+

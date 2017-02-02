@@ -1,0 +1,91 @@
+The Eight Queens Problem:
+Place eight queens on an 8x8 chess board in such a way that no queen can take another one.
+
+
+The first theorem I would like to prove is that there can be no more than eight queens that can be placed in such a way.
+For, suppose that eight queens are already placed on the chess board in the said manner,
+we know that if you were to search each column, you can find at most one queen, because there are eight columns.
+If one column has no queen, then two queens must be on the same column somewhere, which is not allowed.
+
+The next theorem I would like to prove is that the configuration of seven queens completely determine the entire configuration.
+Suppose there are already seven queens on the board, this implies that seven columns and seven rows are no longer free.
+This means that the position of seven queens completely determines the whole configuration. The eight is unnecessary.
+
+The next theorem is that the reasoning in the previous paragraph cannot be carried forward to less than seven queens.
+For, suppose there are six queens on the board, this implies six columns and six rows are not free.
+This also implies two rows and two columns are free. The intersections of the free axes allows four possible positions, which ones will be
+used is not yet determined. (The reader might notice that I have yet to use the diagonal for my arguments although it might be conceivable
+that the diagonals can determine the only possible positions. This is because we have yet to prove that such a configuration is even possible in the first place.)
+
+The fourth theorem is this: if the eight queens are placed on the board in the required manner and we demote them to rooks, it is possible, by
+switching their columns, to line them up in only one diagonal. (The consequence of this theorem is very dramatic.)
+For since each row has a queen, find the one with the top-most row. Then move its column to the right-most side, this shall become the right-most
+corner of the diagonal. Carry out the same operation until we arrive at a diagonal of "rooks" leaning forwad (backward works too).
+This does not violate the requirement of "stalemate" albeit for rooks only.
+
+The fifth theorem is: if the rooks described in the fourth theorem were to be promoted back to queens, they can be arranged to satisfy
+the stalemate requirement by switching their columns back to their original positions. This implicitly uses the reversibility of
+the switching algorithm.
+(This is more a corollary than a theorem, it follows
+directly from the reasoning in the previous paragraph and an explicit proof is cumbersome.)
+
+The sixth theorem: The problem can be solved by placing eight queens in one diagonal and then switching their columns.
+This is a direct consequence of the fourth and the fifth theorem with the explicit mentioning of the "switching" trick.
+(This implicitly uses a very bold theorem: any ordered set of discrete objects can be arranged to any configuration 
+by successively switching the positions of two objects at a time.)
+This unifies all possible solutions into one algorithm, that's why I called it dramatic.
+
+The seventh theorem: Given the diagonal arrangement mentioned in the previous paragraph, switching the columns of two queens invariably sets
+them into one (opposite) diagonal.
+For, given the position of two queens, we can map a "mini-square" such that the two queens are in opposite corners. Since this figure is a square,
+it has two diagonal. Switching the queens' columns only transfers them in the opposite diagonal, as they are still in opposite corners of the
+square.
+
+The eighth and final theorem: There is no solution to the problem.
+For if there were, we can implement it using the algorithm mentioned in the sixth theorem. However, the seventh theorem implies that the last
+step will produce two queens on one diagonal. Thus, the "stalemate" requirement can never be satisfied.
+
+
+
+The core of our proof is the implicit theorem (mentioned in the sixth theorem): any ordered set of discrete objects can be arranged to any
+configuration by successively switching the positions of two objects at a time.
+The theorem is easily accepted by the user who knows about sorting algorithms. However, for the sake of completeness I will include a proof here.
+Given an ordered set of N objects where N is a positive integer, our goal is to arrange these objects into some desired configuration.
+Unlike in sorting algorithms, our problem allows us to know some definite final configuration.
+Each object, therefore, can be assigned a "final position", which we can represent by a positive integer.
+The initial configuration of the set may be described as "chaotic" in the sense that if we labeled each object according to its final position,
+the labels would not be arranged in ascending order.
+Our goal is to make it so using only one move: switching.
+The positions of two objects may be switched once at a time.
+However, since the objects are now labeled, we can forget about the initial configuration.
+It is easy to see that any one object may be placed to any position by successive switches.
+However, since we are arranging not one but all objects, a single switch can also affect the position of other objects we care about.
+This can be solved by the notion of a subset.
+Our first goal is to move the object with label "1" to the first position. We can do so by successively switching it with the object on its left 
+until it reaches position 1.
+We then create a subset of N - 1 objects which consists of the second up to the last object.
+(In order words, we can "shrink" the set of chaotic objects by one.)
+Since the first object is not part of this set, any change we make to such a set will not affect the first object.
+The next goal is then to move the object labeled "2" to the first position of the subset.
+This will naturally place it to the second place.
+We can perform the same algorithm until the total number of objects in the subset is one, which means that all objects outside the subset are properly ordered and the only object in the subset is labeled "N".
+Q.E.D
+
+
+There is a fallacy in this reasoning.
+The idea that two queens on the same diagonal, when switched, will always fall on another similar diagonal is very much accurate.
+However, it is irrelevant. We have indeed proven that the final configuration can indeed be arrived at from the "single diagonal" configuration
+but the application of the "switching" theorem does not take into account that, when two queens far from each other are put together,
+they are no longer in the same diagonal.
+The "mini-square" technique applies only to queens which are already on a single diagonal.
+It doesn't prove anything.
+
+
+A deliberate generation of configurations is our only way.
+Since each row has at most one queen, we may label each queen according to her row number.
+We can represent this as the position of an object in a string.
+The object itself will be the column number.
+Thus, our job is simply to generate the permutation of 8 distinct objects.
+
+
+And indeed the correct solution is merely an optimization of the permutation algorithm with a little bell and whistle.

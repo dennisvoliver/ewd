@@ -1,0 +1,407 @@
+Tower of Hanoi
+
+Goal: A tower of n disks is to be moved from one pole to the other.
+
+Rule 1: Movement is restricted to one disk at a time.
+
+Therefore movement of a tower of n disks is equivalent to movement of n disks in at least n time units
+
+Rule 2: A wider disk cannot be moved on top of a smaller one.
+
+Rule 3: No two disks are of equal diameter.
+
+Therefore, movement of a tower is uniquely ordered and the order of movement is that of decreasing disk diameter.
+
+
+The first to be moved to the destination pole is the largest disk.
+However, the disk is at the bottom of the source pole.
+Since movement is restricted to disk at a time, all disks on top
+of our desired disk shall need to be "moved out of the away" first.
+For if there were, not, the task would be impossible.
+
+(Proof: the first movement is the top disk from source to the destination pole. After that, only two possible movements can be
+considered. The first is moving the disk back to its original position, and the other one is moving another disk on the destination pole.
+The former nullifies the first move and the second is illegal according to rule 2 so the only possible moves cancel each other out)
+
+If we had some place to put such disks and retrieve them in any order we want, this problem would be trivial.
+In fact, an infinite number of poles will do the trick.
+Such poles can retain the same properties as the source and destination poles.
+
+However, ..
+
+Rule 4: You are only provided with a total of three poles with similar properties.
+
+So only one is a "buffer".
+If that one buffer allowed a reverse order of disks, our problem would be trivial, but that is not the case.
+
+There is hope, however.
+If the bottom disk is to be moved to the destination pole, all disks on
+top of it must first be moved to the buffer pole (for a moment, we shall assume this is possible without proof).
+That leaves the task of moving n - 1 disks from the source pole to the
+buffer pole.
+The buffer pole has the same properties as the destination pole.
+The destination pole is available (we are able to move all n - 1 disks to the destination pole as there is no disk there smaller than all n - 1 disks)
+
+This means we can treat the destination pole as a pseudo-buffer and the buffer pole as a pseudo-destination pole.
+But this also means we are now left with the task of transporting all disks on top of the second one to the destionation pole so that we may transfer the second disk to the buffer pole.
+
+This reasoning can be done repeatedly until we get to the top disk. In which case, no buffer pole is needed and it can be move to its destination with one movement in one unit time.
+But what happens next?
+The first node is an obstacle to the one below it and its destination node is a buffer pole to the one below it.
+As soon as this obstacle is gone, the second one can be moved to its destination pole. Then the final movement is to be done. The first pole is then moved to the second's destination node with one step.
+What next? The third one is freed and can be moved to the destination pole. But then we are left with a problem.
+There is a tower that needs to be moved to the third node and this tower is composed of more than one disk.
+The other pole, which has the fourth disk on top can accommodate all disks in the tower so this can also be used as a buffer node.
+
+All these seem to share the same properties.
+Macroscopically, we can say that:
+In order to move a tower of n disks to a destination pole, a tower of
+n - 1 disks needs to be moved to a buffer pole.
+Then the nth disk needs to be moved to the destination pole.
+Then the tower in the buffer pole needs to be moved on top of the nth disk in the destination pole.
+
+So, an action consists of three moves:
+1. move n - 1 top disks from source to buffer
+2. move bottom disk from source to destination
+3. move n - 1 top disks from buffer to destination
+
+However, "n - 1 top disks" is also a tower, so this action is defined
+recursively. Let's call it movetower(n - 1, from, to) where 'from' and 'to' are references to poles.
+
+movetower(n, from, to, buffer) :
+1. movetower(n - 1, from, buffer, to)
+2. movedisk(1, from, to)
+3. movetower(n - 1, buffer, to, from)
+
+There is an implicit referencing method to the disks. Each disk is numbered from 1 to n (where n is the number of disks on the tower) starting from the top of whichever pole it is in. So, 1 is the top disk and n is the bottom disk. Every other disk can be referenced by an offset to these disks.
+
+There is one problem to this definition of movetower(). What if n = 1?
+Steps 1 and 3 will be meaningless.
+There must be an exception, therefore, for that instant.
+
+
+movetower(n, from, to, buffer) :
+if n > 1 then
+	1. movetower(n - 1, from, buffer, to)
+	2. movedisk(1, from, to)
+	3. movetower(n - 1, buffer, to, from)
+else
+	1. movedisk(n, from, to)
+
+An alternative is to make it so that movetower() does nothing when n = 0.
+This way, the second step will still be the only one executed.
+
+if n > 0 then
+	1. movetower(n - 1, from, buffer, to)
+	2. movedisk(1, from, to)
+	3. movetower(n - 1, buffer, to, from)
+else
+	do nothing
+
+
+This way, the first set of steps would be to recursively replace the first step by a more primitive step until n becomes zero.
+After which, the whole event will seem chaotic. If we were to look at the process at some random time after the first movedisk() is executed,
+will we be able to predict the next movement?
+
+We know that the rules will not be violated because this program was derived from the rules.
+This means that each tower in each pole is still arranged in increasing disk diameter starting from the top.
+
+We may also notice that the nth disk has the fewest movement: one. As soon as it is moved from the source to the destination, it will stay
+there until the process is over.
+Intuitively, we know that the smaller the disk diameter, the more it moves.
+Can we tell exactly how?
+
+The nth disk shall be moved exactly once, the (n - 1)th disk shall be moved exactly twice.
+The third disk shall be moved four times.
+In general the kth disk shall be moved twice the number of times the (k + 1)th is moved.
+This is because the movement of the kth disk is necessary whenever the (k + 1)th needs to move, with the sole exception of the last largest disk.
+
+The total number of moves can therefore be defined recursively too:
+m(k) = 2 * m(k + 1)
+m(n) = 1
+
+Since we are referencing disks via their diameter and not their level in a particular tower, we can reverse their label. If we named the largest disk 1 and the smallest n, the definition can be changed to:
+
+m(k) = 2 * m(k - 1)
+m(1) = 1
+
+
+The total number of moves is therefore m(1) + m(2) + m(3) + ... + m(n).
+This can be further expanded to
+
+1 + 2 * 1 + 2 * 2 * 1 + ... + 2^(n - 1) * 1 = sigma(k = 0, n - 1, 2^k)
+(2 - 1) + 2 + 2 * 2 + ... + 2^(n -1) = -1 + 2 * 2 + 2 * 2 + 2 * 2 * 2 + ... + 2^(n - 1)
+= -1 + 2*(2 * 2) + 2 * 2 * 2 + ... + 2^(n - 1)
+= -1 + 2 * (2^3) + 2^4 + ... + 2^(n - 1)
+= -1 + 2 * 2^(n - 1)
+= -1 + 2^n
+= 2^n - 1
+
+
+
+Such recursive definitions allow straight forward expression of the solution in any programming language that supports recursion.
+This, however, becomes a challenge when we use a language where such a feature does not exist and can only be implemented
+expensively (e.g. in machine language).
+
+What is inevitable, and concidentally the more common way of implementing recursion, is the notion of a stack.
+Since the algorithm requires the postponement of macroscopic action in favor of more primitive action, the execution of which must be in the
+reverse order of their postponement, the stack is indispensable.
+Luckily, the stack can be cheaply implemented in a language as primitive as the machine's.
+
+One thing is certain, though, the stack cannot be dynamically allocated. Such a feature requires too much bookkeeping. The simplest
+data structure implementable in machine code is an array. Luckily, arrays with the help of index variables are natural stacks.
+But this means we need some way of determining the maximum size of the stack.
+
+Which action requires a stack, anyway? The movedisk() certain does not. It is the most primitive, it does not rely on a more primitive action.
+Therefore, all we need the stack for is the movetower() action, which must maintain the integrity of four data parameters and the step to
+be executed next.
+
+A single movetower() action must be expanded into three sub-actions.
+This is not why we use stacks.
+We use stacks when at least one of the sub-actions must be expanded too.
+But this is not enough, we can do away with stacks if there is only one sub-action.
+No, the action should consist of more than one sub-action, one of which also requires expansion to sub-actions.
+But that is not enough either.
+If there there is no other sub-action to be executed after the one which requires expansion, there is also no need for a stack, since
+there is no information that needs to be kept while the sub-action is being expanded.
+This is probably the motivation for so-call "tail recursion".
+Recursion is only expensive because of its excessive use of the stack.
+If the stack can be dispensed with, recursion becomes but an elegant way of expressing an algorithm.
+
+
+So, the use of the stack is justified by the following:
+1. The action consists of more than one sub-action.
+2. There is at least one sub-action that also needs a stack.
+3. The said sub-action is not the last to be executed.
+
+The second requirement needs elaboration. Suppose the sub-action consists of only one primitive sub-action, we can just replace it with
+the primitive one instead of postponing the other steps. Thus, the non-primitive sub-action must also require the stack.
+
+There is but one fallacy to this line of reasoning. 
+If replacement of an action with a more primitive sub-action alone does not justify the use of the stack and can be done without it, we can
+say that even the above requirements do not justify it either. We can just replace all macroscopic actions on paper with their primitive
+counter parts and give the machine nothing but primitive actions.
+
+Therefore, the substitution alone should justify the use of a stack regardless of whether the sub-action is primitive or the last sub-action or the only sub-action. The three requirements mentioned are dumb.
+
+The only action which does not require the use of a stack is that which consists of zero sub-actions, viz. an atomic action, like movedisk().
+So, the only actions expected to appear on the stack are non-atomic actions and postponed atomic actions.
+Postponed atomic actions must, corollarily, be prefixed by non-atomic actions. For if they were not, then they must be removed from the stack.
+Therefore, if we view the stack as a physical stack, all atomic actions to be put on the stack must have a non-atomic action on top of it.
+Otherwise, it will be executed.
+
+(Ironically, the tower of Hanoi is also a stack of disks. The only diffrence is that there is a strict ordering rule for the objects.)
+
+The algorithm is therefore very simple:
+
+0. Each action must be stored somewhere arranged in order of increasing priority.
+This is the program text.
+1. The highest priority action shall be inspected.
+2. If an action is non-atomic, it is expanded into sub-actions, all of which must be put on the stack in such a way that steps to be executed
+later must be inserted first.
+Otherwise, if the action is atomic, it will be executed.
+(This results on the next step being on top of the stack.)
+3. If the stack is non-empty, it will then be regarded as highest priority action. 
+Otherwise, the next action from the program text shall be the highest priority.
+4. If the highest-priority action is 'do nothing', then the program halts.
+Otherwise, we jump back to step 1.
+
+Step 2 involves tricky manipulation of arrays and index variables.
+It should be possible to determine whether an action is atomic or not, so that information also needs to be placed on the stack for inspection.
+Since we are dealing with only two actions of two different types, we can store this information (along with the number of parameters) with
+their names.
+
+For the sake of simplicity, we should be willing to sacrifice a little stack space.
+Instead of storing the information on how many parameters an action will take, we should make all actions accept the same number of parameters.
+This will greatly reduce computation.
+If we define a particular instance of movetower as:
+
+movetower(1, A, B, C) = movedisk(A, B)
+
+where movedisk() is now just an action of moving the stop disk of pole A to the top of pole B.
+
+The movetower definition therefore becomes
+
+movetower(n, FROM, TO, BUFFER):
+if n > 1 then
+	1. movetower(n - 1, FROM, BUFFER, TO)
+	2. movetower(1, FROM, TO, BUFFER)
+	3. movetower(n - 1, BUFFER, TO, FROM)
+else
+	movedisk(A, B)
+
+
+This, however, implies that movetower is an action with two types, distinguishable only through the first argument.
+n > 1 is non-atomic and n = 1 is atomic.
+But this is all very well, as the amount of bookkeeping we need to do is minimal.
+The movedisk() action does not even need to appear in the stack at all.
+
+We are now left with one question: how big should the stack be?
+Each of the four parameters can be represented as an integer variable with enough capacity to accommodate n and must be capable of representing at least the number three to represent the poles.
+Therefore, the maximum size of the stack -- measured in integer variable size units -- is four times the maximum number of postponed actions at any given time.
+
+At any given time, only the top of the stack is inspected. One of two things may happen, the action may be expanded or it may be executed.
+If it is the former, then the top action will be replaced by three new actions.
+This means two additional action-size units of the stack space shall be consumed.
+If the latter, then one unit shall be freed.
+
+The first time the stack is used, it will consist of three units:
+
+movetower(n - 1) 
+movetower(1)
+movetower(n - 1)
+
+After the execution of the top two actions, two units will have been freed.
+This may be consumed by the bottom action.
+In fact, this is the case at any given time.
+Therefore, consumption of stack space is guaranteed to increase only by the expansion of the first steps.
+All other expansions will consume previously used stack spaces.
+
+This allows us to determine the upperbound for the worst case scenario where all first steps are non-atomic.
+Such a scenario actually always happens before the smallest disk is moved for the first time.
+We can represent the stack space consumption via recursive function s.
+
+s(n) = s(n - 1) + 2
+s(1) =  0
+
+Expanding the first equation we get:
+s(n) = s(n - 2) + 2 + 2
+s(n) = s(n - 3) + 2 + 2 + 2
+.
+.
+.
+s(n) = s(n - (n - 1)) + 2 * (n - 1)
+s(n) = s(1) + 2 * (n - 1)
+s(n) = 2 * (n - 1)
+
+
+So, we can represent the stack as an array of 4 * 2 * (n - 1) integers.
+Since our algorithm requires the determination of n, it makes sense to put it at the top of every action unit in the stack.
+The ordering of the other parameters is a concern for the implementation of the movetower() action, not the stack.
+
+The stack index must always be pointing at the object at the top of the stack.
+A 'push', which means putting an object on top of the stack can be implemented as the addition of four to the stack index.
+A 'pop' would be the opposite.
+
+This poses a certain problem, the instance the stack is empty.
+What will the index be pointing at?
+This is easily remedied by the introduction of a null object, which is always at the bottom of the stack.
+Popping a null object shall be prohibited but inspection is allowed.
+
+(Remark: There is a convention in stack implementations where inspection of the top object is possible only through popping.
+I find this odd and cumbersome.
+Such an implementation still requires special consideration when popping an empty stack, not to mention the task of having to push the same
+object back because you just want to inspect it, not remove it. Why bother?)
+
+Our previously defined algorithm requires the separation between the program text and postponed actions in the task.
+However, this is too general. In actuality, there is only one action in the program text: movetower(n, A, B, C).
+By merging the program text and the stack, we can further simplify the algorithm and remove the notion of priority.
+The action at the top of the task is the highest priority, no other information needs be known by the machine.
+
+The algorithm therefore becomes:
+
+push action;
+
+repeat
+	if top is atomic then
+		execute;
+	else
+		expand;
+until stack is empty;
+
+
+The main loop is guaranteed to terminate as soon as the stack becomes empty.
+One object is pushed to the stack before the loop section, the stack is
+therefore non-empty before the first execution of the repeat clause, so one iteration is certain.
+
+At each iteration, one of two mutually exclusive possibilities may occur: the top is atomic or not.
+If it is atomic, the execute subroutine will remove it from the stack, making it one step closer to becoming empty.
+If it is non-atomic, one of two possibilities may occur:
+	(a) the expand subroutine will replace the top with two non-atomic and one atomic action
+	(b) the expand subroutine will replace the top with three atomic actions
+
+The second possibility will guarantee the removal of the non-atomic action in the following three iterations.
+The first possibility is more dim.
+Not only does it not remove the non-atomic, it adds another one.
+
+So what makes us confident that the program will not generate an endlessly growing stack of non-atomic actions?
+It has to do with the 'type' of non-atomics generated. If even one of them is exactly the same type with exactly similar properties as
+its predecessor, then we cannot guarantee the termination of the program.
+
+Fortunately, this is not the case. 
+Each of the non-atomics generated by the 'expand' subroutine has an integer property that is one less than its
+predecessor. Since this integer is initially finite, there will inevitably come a time when it will reach its minimum.
+When such a minimum is reached, the action possessing that property becomes atomic.
+(As a matter of fact, the possibility (b) exists precisely because of such a property.)
+
+This property guarantees that all non-atomics will eventually be replaced by atomics that will be removed by the 'execute' subroutine.
+And so, the stack will eventually be empty.
+Thus, the program will terminate.
+
+The implementation of the 'execute' subroutine is straight-forward but the 'expand' requires elaboration.
+The idea is to replace the top of the stack with three actions.
+This can be accomplished through a combination of push and pop routines as is common among stack-dependent algorithms.
+However, I prefer to imagine writing programs for the machine itself. Adding layers may help clarify the program but wantonly
+adding wrong layers is just as bad as no layers at all. You end up with programs that are not only obfuscated but inefficient too.
+
+The 'expand' is already a good abstraction. It does something every simple: substitution.
+In fact, we can live perfectly happy without knowing the inner workings of this subroutine.
+Other than these reasons, the push-pop mechanism would require copying data to and from another type of store.
+The stack itself can be used as a placeholder for temporary data.
+
+As long as we are touching areas within the boundaries of the stack array (i.e. without overflow) and we are not stepping on any important data,
+there should be no harm in using the stack itself for bookkeeping.
+
+Suppose that at the top of the stack, the following action is stored:
+
+movetower(k, A, B, C)
+
+which shall be represented in the integer array as
+
+k	A	B	C
+
+An execution of the 'expand' subroutine will turn that into
+
+(k - 1)	A	C	B
+1	A	B	C
+(k - 1)	C	B	A
+
+To reduce the amount of recomputation, it makes sense to keep all the initial information on the top of the stack first.
+Without changing the stack index, we can use the areas 'above' the top of the stack provided we do not exceed two action units.
+So, let's say the stack index is stored in the integer variable i.
+Suppose that the stack is to be represented by the integer array s[].
+Remember, the stack index is currently pointing at the first column of the predecessor action.
+So, s[i] = k, and all the other columns are i minus their offset from the first.
+
+s[i + 8] is the first column of the new top action.
+s[i + 4] is the first column of the middle action.
+
+It should be easy to see why the following code snippet work.
+
+This will create the first row of the replacement table.
+
+s[i + 8] := s[i] - 1;
+s[i + 7] := s[i - 1];
+s[i + 6] := s[i - 3];
+s[i + 5] := s[i - 2];
+
+Then we create the second row.
+
+s[i + 4] := 1;
+s[i + 3] := s[i - 1];
+s[i + 2] := s[i - 2];
+s[i + 1] := s[i - 3];
+
+Lastly, we modify the current top action.
+
+s[i] := s[i + 8];
+s[i - 1] := s[i + 6];
+s[i - 2] := s[i + 5];
+s[i - 3] := s[i + 7];
+
+Then we point the stack index to the right place.
+
+i := i + 8;
+
+In hindsight, the push-pop combination might have been less obscure but it will certainly be inefficient.
+Nonetheless, this has been implemented and it works fine.
